@@ -1,5 +1,8 @@
+import random
+
 from helpersAndConstants import *
 from player import Player
+from enemy import Enemy
 
 
 class IntroView(arcade.View):
@@ -60,20 +63,27 @@ class GameView(arcade.View):
         self.tile_map = None
         self.scene = None
         self.physics_engine = None
+        self.enemy_can_not_continue = None
+        self.enemy_check_interval = None
 
+        # Player
         self.player_list = None
         self.player_sprite = None
         self.player_pos_x = PLAYER_INIT_X
         self.player_pos_y = PLAYER_INIT_Y
+
+        # Enemy
+        self.enemy_list = None
+        self.enemy_sprite = None
 
         # Track the current state of what key is pressed
         self.left_pressed = False
         self.right_pressed = False
         self.up_pressed = False
         self.down_pressed = False
-        self.last_direction = None
         self.cur_direction = None
 
+        # Some "sprite helper" to check if player can move up/down/left/right
         self.check_sprite = None
         self.check_sprite_list = None
 
@@ -81,6 +91,8 @@ class GameView(arcade.View):
         self.end_game = False
         self.level = 1
         self.cur_direction = "right"
+        self.enemy_can_not_continue = False
+        self.enemy_check_interval = 0
 
         layer_options = {
             "Walls": {
@@ -91,6 +103,7 @@ class GameView(arcade.View):
                                             layer_options)
         self.scene = arcade.Scene.from_tilemap(self.tile_map)
 
+        # Init player item
         self.player_list = arcade.SpriteList()
         self.player_sprite = Player("left")
         self.player_sprite.center_x = self.player_pos_x
@@ -103,16 +116,23 @@ class GameView(arcade.View):
             walls=self.scene["Walls"]
         )
 
+        # Init sprite helper item
         self.check_sprite_list = arcade.SpriteList()
-        self.check_sprite = arcade.Sprite(resource_path("images/check_sprite.png"), 0.4)
+        self.check_sprite = arcade.Sprite(resource_path("images/check_sprite.png"), 0.4)  # 0.4
         self.check_sprite.center_x = 100
         self.check_sprite.center_y = 100
         self.check_sprite_list.append(self.check_sprite)
 
+        # Init enemy items
+        self.enemy_list = arcade.SpriteList()
+        self.enemy_sprite = Enemy("red")
+        self.enemy_sprite.center_x = 75  # TODO
+        self.enemy_sprite.center_y = 75  # TODO
+        self.scene.add_sprite("Enemies", self.enemy_sprite)
+
     def on_draw(self):
         arcade.start_render()
         self.scene.draw()
-        self.check_sprite_list.draw()
 
     def on_key_press(self, key, modifiers):
         if key == arcade.key.LEFT:
@@ -146,6 +166,14 @@ class GameView(arcade.View):
             delta_time, ["Player"]
         )
 
+        self.scene.update_animation(
+            delta_time, ["Enemies"]
+        )
+
+        self.scene.update(
+            ["Enemies"]
+        )
+
         # Moving player
         if self.cur_direction == "right":
             self.player_sprite.face_direction = "right"
@@ -163,38 +191,52 @@ class GameView(arcade.View):
             self.player_sprite.face_direction = "down"
             self.player_sprite.center_y -= PLAYER_MOVEMENT_SPEED
 
+        # Moving enemies
+        self.enemy_check_interval += 1
+        for en in self.scene["Enemies"]:
+            if en.cur_direction == "right":
+                en.center_x += ENEMY_MOVEMENT_SPEED
+                if self.enemy_check_interval > 20:
+                    if can_go_down(self, en.center_x, en.center_y) or can_go_up(self, en.center_x, en.center_y):
+                        en.cur_direction = random.choice(["up", "down"])
+                        self.enemy_check_interval = 0
+                if arcade.check_for_collision_with_list(en, sprite_list=self.scene["Walls"]) or \
+                        arcade.check_for_collision_with_list(en, sprite_list=self.scene["Enemies"]):
+                    en.center_x -= ENEMY_MOVEMENT_SPEED
+                    self.enemy_can_not_continue = True
+            if en.cur_direction == "left":
+                en.center_x -= ENEMY_MOVEMENT_SPEED
+                if self.enemy_check_interval > 20:
+                    if can_go_down(self, en.center_x, en.center_y) or can_go_up(self, en.center_x, en.center_y):
+                        en.cur_direction = random.choice(["up", "down"])
+                        self.enemy_check_interval = 0
+                if arcade.check_for_collision_with_list(en, sprite_list=self.scene["Walls"]) or \
+                        arcade.check_for_collision_with_list(en, sprite_list=self.scene["Enemies"]):
+                    en.center_x += ENEMY_MOVEMENT_SPEED
+                    self.enemy_can_not_continue = True
 
-def can_go_left(self, sprite_pos_x, sprite_pos_y):
-    self.check_sprite.center_x = sprite_pos_x - 20
-    self.check_sprite.center_y = sprite_pos_y
-    if arcade.check_for_collision_with_list(self.check_sprite, sprite_list=self.scene["Walls"]):
-        return False
-    else:
-        return True
+            if en.cur_direction == "up":
+                en.center_y += ENEMY_MOVEMENT_SPEED
+                if self.enemy_check_interval > 20:
+                    if can_go_right(self, en.center_x, en.center_y) or can_go_left(self, en.center_x, en.center_y):
+                        en.cur_direction = random.choice(["right", "left"])
+                        self.enemy_check_interval = 0
+                if arcade.check_for_collision_with_list(en, sprite_list=self.scene["Walls"]) or \
+                        arcade.check_for_collision_with_list(en, sprite_list=self.scene["Enemies"]):
+                    en.center_y -= ENEMY_MOVEMENT_SPEED
+                    self.enemy_can_not_continue = True
 
+            if en.cur_direction == "down":
+                en.center_y -= ENEMY_MOVEMENT_SPEED
+                if self.enemy_check_interval > 20:
+                    if can_go_right(self, en.center_x, en.center_y) or can_go_left(self, en.center_x, en.center_y):
+                        en.cur_direction = random.choice(["right", "left"])
+                        self.enemy_check_interval = 0
+                if arcade.check_for_collision_with_list(en, sprite_list=self.scene["Walls"]) or \
+                        arcade.check_for_collision_with_list(en, sprite_list=self.scene["Enemies"]):
+                    en.center_y += ENEMY_MOVEMENT_SPEED
+                    self.enemy_can_not_continue = True
 
-def can_go_right(self, sprite_pos_x, sprite_pos_y):
-    self.check_sprite.center_x = sprite_pos_x + 20
-    self.check_sprite.center_y = sprite_pos_y
-    if arcade.check_for_collision_with_list(self.check_sprite, sprite_list=self.scene["Walls"]):
-        return False
-    else:
-        return True
-
-
-def can_go_up(self, sprite_pos_x, sprite_pos_y):
-    self.check_sprite.center_x = sprite_pos_x
-    self.check_sprite.center_y = sprite_pos_y + 20
-    if arcade.check_for_collision_with_list(self.check_sprite, sprite_list=self.scene["Walls"]):
-        return False
-    else:
-        return True
-
-
-def can_go_down(self, sprite_pos_x, sprite_pos_y):
-    self.check_sprite.center_x = sprite_pos_x
-    self.check_sprite.center_y = sprite_pos_y - 20
-    if arcade.check_for_collision_with_list(self.check_sprite, sprite_list=self.scene["Walls"]):
-        return False
-    else:
-        return True
+            if self.enemy_can_not_continue:
+                en.cur_direction = random.choice(["up", "down", "left", "right"])
+                self.enemy_can_not_continue = False
