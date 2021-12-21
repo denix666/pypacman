@@ -15,8 +15,8 @@ PLAYER_INIT_Y = 75
 PLAYER_ANIMATION_SPEED = 9
 PLAYER_MOVEMENT_SPEED = 3
 
-ENEMY_ANIMATION_SPEED = 7
-ENEMY_MOVEMENT_SPEED = 3
+ENEMY_ANIMATION_SPEED = 6
+ENEMY_MOVEMENT_SPEED = 2
 
 
 def resource_path(relative_path):
@@ -24,37 +24,37 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 
-def can_go_left(self, sprite_pos_x, sprite_pos_y):
-    self.check_sprite.center_x = sprite_pos_x - 20
-    self.check_sprite.center_y = sprite_pos_y
-    if arcade.check_for_collision_with_list(self.check_sprite, sprite_list=self.scene["Walls"]):
+def can_go_left(check_sprite, walls, sprite_pos_x, sprite_pos_y):
+    check_sprite.center_x = sprite_pos_x - 20
+    check_sprite.center_y = sprite_pos_y
+    if arcade.check_for_collision_with_list(check_sprite, sprite_list=walls):
         return False
     else:
         return True
 
 
-def can_go_right(self, sprite_pos_x, sprite_pos_y):
-    self.check_sprite.center_x = sprite_pos_x + 20
-    self.check_sprite.center_y = sprite_pos_y
-    if arcade.check_for_collision_with_list(self.check_sprite, sprite_list=self.scene["Walls"]):
+def can_go_right(check_sprite, walls, sprite_pos_x, sprite_pos_y):
+    check_sprite.center_x = sprite_pos_x + 20
+    check_sprite.center_y = sprite_pos_y
+    if arcade.check_for_collision_with_list(check_sprite, sprite_list=walls):
         return False
     else:
         return True
 
 
-def can_go_up(self, sprite_pos_x, sprite_pos_y):
-    self.check_sprite.center_x = sprite_pos_x
-    self.check_sprite.center_y = sprite_pos_y + 20
-    if arcade.check_for_collision_with_list(self.check_sprite, sprite_list=self.scene["Walls"]):
+def can_go_up(check_sprite, walls, sprite_pos_x, sprite_pos_y):
+    check_sprite.center_x = sprite_pos_x
+    check_sprite.center_y = sprite_pos_y + 20
+    if arcade.check_for_collision_with_list(check_sprite, sprite_list=walls):
         return False
     else:
         return True
 
 
-def can_go_down(self, sprite_pos_x, sprite_pos_y):
-    self.check_sprite.center_x = sprite_pos_x
-    self.check_sprite.center_y = sprite_pos_y - 20
-    if arcade.check_for_collision_with_list(self.check_sprite, sprite_list=self.scene["Walls"]):
+def can_go_down(check_sprite, walls, sprite_pos_x, sprite_pos_y):
+    check_sprite.center_x = sprite_pos_x
+    check_sprite.center_y = sprite_pos_y - 20
+    if arcade.check_for_collision_with_list(check_sprite, sprite_list=walls):
         return False
     else:
         return True

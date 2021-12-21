@@ -2,14 +2,16 @@ from helpersAndConstants import *
 
 
 class Player(arcade.Sprite):
-    def __init__(self, face_direction):
+    def __init__(self):
         super().__init__()
 
         self.scale = PLAYER_SCALING
+        self.center_x = PLAYER_INIT_X
+        self.center_y = PLAYER_INIT_Y
         self.cur_texture = 0
         self.update_interval = 0
         self.number_of_textures_in_animation = 2
-        self.face_direction = face_direction
+        self.direction = "up"
 
         self.walk_right_textures = []
         for i in range(3):
@@ -34,28 +36,42 @@ class Player(arcade.Sprite):
         self.texture = self.walk_right_textures[0]
         self.hit_box = self.texture.hit_box_points
 
-    def update_animation(self, delta_time):
+    def update(self):
+        # Animation
         self.update_interval += 1
         if self.update_interval > PLAYER_ANIMATION_SPEED:
             self.update_interval = 0
 
-            if self.face_direction == "down":
+            if self.direction == "down":
                 self.cur_texture += 1
                 if self.cur_texture > self.number_of_textures_in_animation:
                     self.cur_texture = 0
                 self.texture = self.walk_down_textures[self.cur_texture]
-            elif self.face_direction == "up":
+            elif self.direction == "up":
                 self.cur_texture += 1
                 if self.cur_texture > self.number_of_textures_in_animation:
                     self.cur_texture = 0
                 self.texture = self.walk_up_textures[self.cur_texture]
-            elif self.face_direction == "right":
+            elif self.direction == "right":
                 self.cur_texture += 1
                 if self.cur_texture > self.number_of_textures_in_animation:
                     self.cur_texture = 0
                 self.texture = self.walk_right_textures[self.cur_texture]
-            elif self.face_direction == "left":
+            elif self.direction == "left":
                 self.cur_texture += 1
                 if self.cur_texture > self.number_of_textures_in_animation:
                     self.cur_texture = 0
                 self.texture = self.walk_left_textures[self.cur_texture]
+
+        # Walk
+        if self.direction == "down":
+            self.center_y -= PLAYER_MOVEMENT_SPEED
+
+        if self.direction == "up":
+            self.center_y += PLAYER_MOVEMENT_SPEED
+
+        if self.direction == "right":
+            self.center_x += PLAYER_MOVEMENT_SPEED
+
+        if self.direction == "left":
+            self.center_x -= PLAYER_MOVEMENT_SPEED
