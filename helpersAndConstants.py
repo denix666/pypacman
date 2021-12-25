@@ -3,7 +3,7 @@ import arcade
 
 SCREEN_WIDTH = 1150
 SCREEN_HEIGHT = 750
-SCREEN_TITLE = "PyPacman v0.1 dev"
+SCREEN_TITLE = "PyPacman v0.2 dev"
 
 # Constants used to scale our sprites from their original size
 TILE_SCALING = 1
@@ -17,6 +17,10 @@ PLAYER_MOVEMENT_SPEED = 3
 
 ENEMY_ANIMATION_SPEED = 6
 ENEMY_MOVEMENT_SPEED = 2
+ENEMY_SCALING = 1
+STARTING_AMOUNT_OF_ENEMY = 2
+
+TILE_SIZE = 50
 
 
 def resource_path(relative_path):

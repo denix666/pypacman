@@ -5,12 +5,12 @@ class Enemy(arcade.Sprite):
     def __init__(self, enemy_type):
         super().__init__()
 
-        self.scale = 0.9
+        self.scale = ENEMY_SCALING
         self.cur_texture = 0
         self.update_interval = 0
         self.number_of_textures_in_animation = 2
         self.enemy_type = enemy_type
-        self.direction = "up"
+        self.direction = None
 
         self.walk_right_textures = []
         for i in range(2):
