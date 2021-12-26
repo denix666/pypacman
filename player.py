@@ -11,7 +11,7 @@ class Player(arcade.Sprite):
         self.cur_texture = 0
         self.update_interval = 0
         self.number_of_textures_in_animation = 2
-        self.direction = "up"
+        self.direction = "left"
 
         self.walk_right_textures = []
         for i in range(3):

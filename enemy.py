@@ -11,6 +11,11 @@ class Enemy(arcade.Sprite):
         self.number_of_textures_in_animation = 2
         self.enemy_type = enemy_type
         self.direction = None
+        self.turn_x = None
+        self.turn_y = None
+        self.center_area_x = None
+        self.center_area_y = None
+        self.possible_moves_list = []
 
         self.walk_right_textures = []
         for i in range(2):

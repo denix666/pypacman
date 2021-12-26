@@ -135,14 +135,21 @@ class GameView(arcade.View):
         for i in range(self.level * STARTING_AMOUNT_OF_ENEMY):
             item_placed_successfully = False
             while not item_placed_successfully:
-                self.enemy_sprite = Enemy(random.choice(["red", "pinc", "blue"]))
+                self.enemy_sprite = Enemy(random.choice(["red", "pinc", "blue", "green"]))
                 self.enemy_sprite.direction = random.choice(["right", "left", "up", "down"])
                 e = random.choice(list(self.map.keys()))
                 if not self.map["wall", e[1], e[2]]:
                     self.enemy_sprite.center_x = e[1] * TILE_SIZE + TILE_SIZE / 2
                     self.enemy_sprite.center_y = e[2] * TILE_SIZE + TILE_SIZE / 2
-                    self.scene.add_sprite("Enemies", self.enemy_sprite)
-                    item_placed_successfully = True
+                    if self.enemy_sprite.center_y != 75:  # Avoid to place enemy on the first row together with player
+                        if self.enemy_sprite.direction in possible_moves(self.map,
+                                                                         self.enemy_sprite.center_x,
+                                                                         self.enemy_sprite.center_y,
+                                                                         self.enemy_sprite.direction):
+                            self.enemy_sprite.turn_x = 0
+                            self.enemy_sprite.turn_y = 0
+                            self.scene.add_sprite("Enemies", self.enemy_sprite)
+                            item_placed_successfully = True
 
     def on_draw(self):
         arcade.start_render()
@@ -194,27 +201,69 @@ class GameView(arcade.View):
         for hit in coin_hit_list:
             hit.remove_from_sprite_lists()
 
+        # Moving enemies
         for en in self.scene["Enemies"]:
+            # Get the center of the tile
+            en.center_area_x = int(en.center_x / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2
+            en.center_area_y = int(en.center_y / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2
+
+            # If we are not in the tile where decision was already taken - choose again random turn direction
+            if int(en.center_x / TILE_SIZE) != en.turn_x or int(en.center_y / TILE_SIZE) != en.turn_y:
+                en.possible_moves_list = possible_moves(self.map, en.center_x, en.center_y, en.direction)
+
+            # Increase possibility to get player
+            if en.center_x > self.player_sprite.center_x:
+                if "left" in en.possible_moves_list:
+                    en.possible_moves_list.extend(["left"]*7)
+
+            if en.center_x < self.player_sprite.center_x:
+                if "right" in en.possible_moves_list:
+                    en.possible_moves_list.extend(["right"]*7)
+
+            if en.center_y > self.player_sprite.center_y:
+                if "down" in en.possible_moves_list:
+                    en.possible_moves_list.extend(["down"]*7)
+
+            if en.center_y < self.player_sprite.center_y:
+                if "up" in en.possible_moves_list:
+                    en.possible_moves_list.extend(["up"]*7)
+
             if en.direction == "right":
                 en.center_x += ENEMY_MOVEMENT_SPEED
-                if arcade.check_for_collision_with_list(en, sprite_list=self.scene["Walls"]):
-                    en.center_x -= ENEMY_MOVEMENT_SPEED
-                    en.direction = random.choice(["up", "down"])
+                if len(en.possible_moves_list) > 0:
+                    if en.center_x >= en.center_area_x:
+                        en.center_x = en.center_area_x
+                        en.direction = random.choice(en.possible_moves_list)
+                        en.turn_x = int(en.center_x / TILE_SIZE)
+                        en.turn_y = int(en.center_y / TILE_SIZE)
+                        en.possible_moves_list = []
 
             if en.direction == "left":
                 en.center_x -= ENEMY_MOVEMENT_SPEED
-                if arcade.check_for_collision_with_list(en, sprite_list=self.scene["Walls"]):
-                    en.center_x += ENEMY_MOVEMENT_SPEED
-                    en.direction = random.choice(["up", "down"])
-
-            if en.direction == "down":
-                en.center_y -= ENEMY_MOVEMENT_SPEED
-                if arcade.check_for_collision_with_list(en, sprite_list=self.scene["Walls"]):
-                    en.center_y += ENEMY_MOVEMENT_SPEED
-                    en.direction = random.choice(["right", "left"])
+                if len(en.possible_moves_list) > 0:
+                    if en.center_x <= en.center_area_x:
+                        en.center_x = en.center_area_x
+                        en.direction = random.choice(en.possible_moves_list)
+                        en.turn_x = int(en.center_x / TILE_SIZE)
+                        en.turn_y = int(en.center_y / TILE_SIZE)
+                        en.possible_moves_list = []
 
             if en.direction == "up":
                 en.center_y += ENEMY_MOVEMENT_SPEED
-                if arcade.check_for_collision_with_list(en, sprite_list=self.scene["Walls"]):
-                    en.center_y -= ENEMY_MOVEMENT_SPEED
-                    en.direction = random.choice(["right", "left"])
+                if len(en.possible_moves_list) > 0:
+                    if en.center_y >= en.center_area_y:
+                        en.center_y = en.center_area_y
+                        en.direction = random.choice(en.possible_moves_list)
+                        en.turn_x = int(en.center_x / TILE_SIZE)
+                        en.turn_y = int(en.center_y / TILE_SIZE)
+                        en.possible_moves_list = []
+
+            if en.direction == "down":
+                en.center_y -= ENEMY_MOVEMENT_SPEED
+                if len(en.possible_moves_list) > 0:
+                    if en.center_y <= en.center_area_y:
+                        en.center_y = en.center_area_y
+                        en.direction = random.choice(en.possible_moves_list)
+                        en.turn_x = int(en.center_x / TILE_SIZE)
+                        en.turn_y = int(en.center_y / TILE_SIZE)
+                        en.possible_moves_list = []
