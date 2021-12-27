@@ -75,3 +75,31 @@ class Player(arcade.Sprite):
 
         if self.direction == "left":
             self.center_x -= PLAYER_MOVEMENT_SPEED
+
+
+class PlayerExplosion(arcade.Sprite):
+    def __init__(self):
+        super().__init__()
+
+        self.scale = PLAYER_SCALING
+        self.current_texture = 0
+        self.update_interval = 0
+        self.animation_completed = False
+
+        # Load textures for enemy
+        self.player_animation_textures = []
+        for i in range(15):
+            texture = arcade.load_texture(resource_path("images/animations/player_die/%s.png" % i))
+            self.player_animation_textures.append(texture)
+        self.textures = self.player_animation_textures
+
+    def update(self):
+        self.update_interval += 1
+        if self.update_interval > PLAYER_EXPLOSION_ANIMATION_SPEED:
+            self.update_interval = 0
+            self.current_texture += 1
+            if self.current_texture < len(self.textures):
+                self.set_texture(self.current_texture)
+            else:
+                self.remove_from_sprite_lists()
+                self.animation_completed = True
