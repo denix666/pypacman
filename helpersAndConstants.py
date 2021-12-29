@@ -4,9 +4,15 @@ import arcade
 # Main settings
 SCREEN_WIDTH = 1150
 SCREEN_HEIGHT = 750
-SCREEN_TITLE = "PyPacman v0.3 dev"
+SCREEN_TITLE = "PyPacman v0.5 dev"
 TILE_SCALING = 1
 TILE_SIZE = 50
+
+# Level configuration
+STARTING_LEVEL = 1
+STARTING_SCORE = 0
+STARTING_AMOUNT_OF_LIVES = 3
+LAST_GAME_LEVEL = 3
 
 # Player settings (default values in comments)
 PLAYER_SCALING = 1  # 1
@@ -14,13 +20,18 @@ PLAYER_INIT_X = 625  # 625
 PLAYER_INIT_Y = 75  # 75
 PLAYER_ANIMATION_SPEED = 9  # 9
 PLAYER_MOVEMENT_SPEED = 3  # 3
-PLAYER_EXPLOSION_ANIMATION_SPEED = 3
+PLAYER_EXPLOSION_ANIMATION_SPEED = 3  # 3
 
 # Enemy settings (default values in comments)
 ENEMY_ANIMATION_SPEED = 6  # 6
-ENEMY_MOVEMENT_SPEED = 2  # 2
+ENEMY_MOVEMENT_SPEED = 1  # 1 ( + level number)
 ENEMY_SCALING = 1  # 1
-STARTING_AMOUNT_OF_ENEMY = 3  # 3
+STARTING_AMOUNT_OF_ENEMY = 2  # 2 ( + level number)
+
+# Score
+SCORE_FOR_GHOST = 150
+SCORE_FOR_SMALL_COIN = 10
+SCORE_FOR_BIG_COIN = 50
 
 
 def resource_path(relative_path):

@@ -24,13 +24,60 @@ class IntroView(arcade.View):
                          arcade.color.YELLOW, font_size=33, anchor_x="center")
         arcade.draw_text("Up, Down, Left, Right - walk", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 210,
                          arcade.color.YELLOW, font_size=33, anchor_x="center")
-        arcade.draw_text("Hit  SPACE  to  start  game", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 300,
-                         arcade.color.YELLOW, font_size=50, anchor_x="center")
+        arcade.draw_text("Hit  SPACE or ESCAPE to  start  game", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 300,
+                         arcade.color.YELLOW, font_size=40, anchor_x="center")
 
     def on_key_press(self, key, modifiers):
         if key == arcade.key.SPACE or key == arcade.key.ESCAPE:
             game_view = GameView()
+            GameView().score = 0
+            GameView().lives = 3
+            GameView().level = 1
             game_view.setup()
+            self.window.show_view(game_view)
+
+
+class LevelCompletedView(arcade.View):
+    def __init__(self, game_view):
+        super().__init__()
+
+        self.game_view = game_view
+
+    def on_draw(self):
+        arcade.start_render()
+        arcade.draw_text("Level completed!", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 100,
+                         arcade.color.YELLOW, font_size=40, anchor_x="center")
+        arcade.draw_text("Hit  SPACE to continue", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 300,
+                         arcade.color.YELLOW, font_size=40, anchor_x="center")
+
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.SPACE:
+            self.game_view.setup()
+            self.window.show_view(self.game_view)
+
+
+class GameEndView(arcade.View):
+    def __init__(self):
+        super().__init__()
+
+    def on_draw(self):
+        arcade.start_render()
+        arcade.draw_text("You are WIN!!! Congratulations!!!!", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 150,
+                         arcade.color.YELLOW, font_size=60, anchor_x="center")
+        arcade.draw_text("Hit  SPACE  to  start  new  game", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 250,
+                         arcade.color.YELLOW, font_size=35, anchor_x="center")
+
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.SPACE:
+            game_view = GameView()
+            GameView().score = 0
+            GameView().lives = 3
+            GameView().level = 1
+            game_view.setup()
+            self.window.show_view(game_view)
+
+        if key == arcade.key.ESCAPE:
+            game_view = IntroView()
             self.window.show_view(game_view)
 
 
@@ -46,12 +93,16 @@ class GameOverView(arcade.View):
                          arcade.color.YELLOW, font_size=35, anchor_x="center")
 
     def on_key_press(self, key, modifiers):
-        if key == arcade.key.SPACE or key == arcade.key.ESCAPE:
+        if key == arcade.key.SPACE:
             game_view = GameView()
             GameView().score = 0
             GameView().lives = 3
             GameView().level = 1
             game_view.setup()
+            self.window.show_view(game_view)
+
+        if key == arcade.key.ESCAPE:
+            game_view = IntroView()
             self.window.show_view(game_view)
 
 
@@ -79,15 +130,16 @@ class GameView(arcade.View):
         arcade.set_background_color(arcade.csscolor.BLACK)
 
         # Game variables
-        self.end_game = None
+        self.end_game = False
         self.level_fail = None
-        self.level = 1
-        self.score = 0
-        self.lives = 3
+        self.level_completed = None
+        self.level = STARTING_LEVEL
+        self.score = STARTING_SCORE
+        self.lives = STARTING_AMOUNT_OF_LIVES
         self.tile_map = None
         self.scene = None
         self.physics_engine = None
-        self.scared_mode = None
+        self.scared_mode = False
         self.player_explosion = None
         self.player_explosion_list = None
 
@@ -107,41 +159,9 @@ class GameView(arcade.View):
         self.small_coin_list = None
         self.big_coin_list = None
 
-    def setup(self):
-        self.end_game = False
-        self.scared_mode = False
-
-        self.map = {}
-
-        layer_options = {
-            "Walls": {
-                "use_spatial_hash": False,
-            },
-        }
-        self.tile_map = arcade.load_tilemap(resource_path("maps/map_" + str(self.level) + ".json"), TILE_SCALING,
-                                            layer_options)
-        self.scene = arcade.Scene.from_tilemap(self.tile_map)
-
-        # Init player item
-        self.player_sprite = Player()
-        self.scene.add_sprite("Player", self.player_sprite)
-
-        # Player die animation
-        self.player_explosion = PlayerExplosion()
-        self.player_explosion_list = arcade.SpriteList()
-
-        # Create the 'physics engine'
-        self.physics_engine = arcade.PhysicsEngineSimple(
-            self.player_sprite,
-            walls=self.scene["Walls"]
-        )
-
-        # Init check sprite helper item (It used to check it there are collision with walls in various scenarios)
-        self.check_sprite_list = arcade.SpriteList()
-        self.check_sprite = arcade.Sprite(resource_path("images/check_sprite.png"), 0.4)  # 0.4
-        self.check_sprite_list.append(self.check_sprite)
-
+    def init_level(self):
         # Create map arrays depended on tiled map
+        self.map = {}
         for ix in range(int(SCREEN_WIDTH / TILE_SIZE)):
             for iy in range(int((SCREEN_HEIGHT - 50) / TILE_SIZE)):
                 self.check_sprite.center_x = TILE_SIZE * ix + TILE_SIZE / 2
@@ -156,34 +176,72 @@ class GameView(arcade.View):
                 else:
                     self.map["big_coin", ix, iy] = False
 
-        # Init small coin items
-        for ix in range(int(SCREEN_WIDTH / TILE_SIZE)):
-            for iy in range(int((SCREEN_HEIGHT - 50) / TILE_SIZE)):
                 if not self.map["wall", ix, iy] and not self.map["big_coin", ix, iy]:
                     self.map["small_coin", ix, iy] = True
                 else:
                     self.map["small_coin", ix, iy] = False
 
-        if not self.level_fail:
-            self.small_coin_list = arcade.SpriteList()
-            self.big_coin_list = arcade.SpriteList()
-            for ix in range(int(SCREEN_WIDTH / TILE_SIZE)):
-                for iy in range(int((SCREEN_HEIGHT - 50) / TILE_SIZE)):
-                    if self.map["big_coin", ix, iy]:
-                        big_coin_sprite = arcade.Sprite(resource_path("images/big_coin.png"), 1)
-                        big_coin_sprite.center_x = TILE_SIZE * ix + TILE_SIZE / 2
-                        big_coin_sprite.center_y = TILE_SIZE * iy + TILE_SIZE / 2
-                        self.big_coin_list.append(big_coin_sprite)
+    def setup(self):
+        # Load tiled map
+        layer_options = {
+            "Walls": {
+                "use_spatial_hash": False,
+            },
+        }
+        self.tile_map = arcade.load_tilemap(resource_path("maps/map_" + str(self.level) + ".json"), TILE_SCALING,
+                                            layer_options)
+        self.scene = arcade.Scene.from_tilemap(self.tile_map)
 
-                    if self.map["small_coin", ix, iy]:
-                        small_coin_sprite = arcade.Sprite(resource_path("images/small_coin.png"), 1)
-                        small_coin_sprite.center_x = TILE_SIZE * ix + TILE_SIZE / 2
-                        small_coin_sprite.center_y = TILE_SIZE * iy + TILE_SIZE / 2
-                        self.small_coin_list.append(small_coin_sprite)
-        self.level_fail = False
+        # Init check sprite helper item (It used to check it there are collision with walls in various scenarios)
+        self.check_sprite_list = arcade.SpriteList()
+        self.check_sprite = arcade.Sprite(resource_path("images/check_sprite.png"), 0.4)  # 0.4
+        self.check_sprite_list.append(self.check_sprite)
+
+        # Init player item
+        self.player_sprite = Player()
+        self.scene.add_sprite("Player", self.player_sprite)
+
+        # Player die animation
+        self.player_explosion = PlayerExplosion()
+        self.player_explosion_list = arcade.SpriteList()
+
+        # init coin sprites
+        self.small_coin_list = arcade.SpriteList()
+        self.big_coin_list = arcade.SpriteList()
+
+        # Create the 'physics engine'
+        self.physics_engine = arcade.PhysicsEngineSimple(
+            self.player_sprite,
+            walls=self.scene["Walls"]
+        )
+
+        if self.level_fail:
+            self.level_fail = False
+        else:
+            self.init_level()  # Init new level
+
+        if self.level_completed:
+            self.init_level()  # Init new level
+            self.level_completed = False
+            self.scared_mode = False
+
+        # Place coins
+        for ix in range(int(SCREEN_WIDTH / TILE_SIZE)):
+            for iy in range(int((SCREEN_HEIGHT - 50) / TILE_SIZE)):
+                if self.map["big_coin", ix, iy]:
+                    big_coin_sprite = arcade.Sprite(resource_path("images/big_coin.png"), 1)
+                    big_coin_sprite.center_x = TILE_SIZE * ix + TILE_SIZE / 2
+                    big_coin_sprite.center_y = TILE_SIZE * iy + TILE_SIZE / 2
+                    self.big_coin_list.append(big_coin_sprite)
+
+                if self.map["small_coin", ix, iy]:
+                    small_coin_sprite = arcade.Sprite(resource_path("images/small_coin.png"), 1)
+                    small_coin_sprite.center_x = TILE_SIZE * ix + TILE_SIZE / 2
+                    small_coin_sprite.center_y = TILE_SIZE * iy + TILE_SIZE / 2
+                    self.small_coin_list.append(small_coin_sprite)
 
         # Place enemy in random places
-        for i in range(self.level * STARTING_AMOUNT_OF_ENEMY):
+        for i in range(STARTING_AMOUNT_OF_ENEMY + self.level):
             item_placed_successfully = False
             while not item_placed_successfully:
                 self.enemy_sprite = Enemy(random.choice(["red", "pinc", "blue", "green"]))
@@ -266,22 +324,29 @@ class GameView(arcade.View):
             ["Player"]
         )
 
-        # Check if player collided with enemy
         self.player_explosion_list.update()
+
+        # Check if player collided with enemy
         player_hit_list = arcade.check_for_collision_with_list(self.player_sprite, sprite_list=self.scene["Enemies"])
         if len(player_hit_list) > 0:
-            self.level_fail = True
+            if not self.scared_mode:
+                self.level_fail = True
 
-            # Remove player and enemy from the field
-            for en in player_hit_list:
-                en.remove_from_sprite_lists()
-            self.player_sprite.remove_from_sprite_lists()
+                # Remove player and enemy from the field
+                for en in player_hit_list:
+                    en.remove_from_sprite_lists()
+                self.player_sprite.remove_from_sprite_lists()
 
-            # Player die animation
-            self.player_explosion.center_y = self.player_sprite.center_y
-            self.player_explosion.center_x = self.player_sprite.center_x
-            self.player_explosion_list.append(self.player_explosion)
+                # Player die animation
+                self.player_explosion.center_y = self.player_sprite.center_y
+                self.player_explosion.center_x = self.player_sprite.center_x
+                self.player_explosion_list.append(self.player_explosion)
+            else:
+                for en in player_hit_list:
+                    en.remove_from_sprite_lists()
+                    self.score += SCORE_FOR_GHOST
 
+        # Wait until die animation is completed, and then restart level, if we have more lives
         if self.player_explosion.animation_completed:
             arcade.pause(1)
             self.lives -= 1
@@ -298,15 +363,29 @@ class GameView(arcade.View):
         # Check if we eat coin increase score and remove coin from list
         coin_hit_list = arcade.check_for_collision_with_list(self.player_sprite, self.small_coin_list)
         for hit in coin_hit_list:
+            self.map["small_coin", int(hit.center_x / TILE_SIZE), int(hit.center_y / TILE_SIZE)] = False
             hit.remove_from_sprite_lists()
-            self.score += 10
+            self.score += SCORE_FOR_SMALL_COIN
 
         # Check if we eat big coin increase score and remove coin from list and enable scared mode for enemy
         big_coin_hit_list = arcade.check_for_collision_with_list(self.player_sprite, self.big_coin_list)
         for hit in big_coin_hit_list:
+            self.map["big_coin", int(hit.center_x / TILE_SIZE), int(hit.center_y / TILE_SIZE)] = False
             hit.remove_from_sprite_lists()
-            self.score += 50
+            self.score += SCORE_FOR_BIG_COIN
             self.scared_mode = True
+
+        # Jump to next level, if we eat all cons or end game
+        if len(self.small_coin_list) == 0 and len(self.big_coin_list) == 0:
+            if self.level == LAST_GAME_LEVEL:
+                self.end_game = True
+                game_view = GameEndView()
+                self.window.show_view(game_view)
+            else:
+                self.level_completed = True
+                self.level += 1
+                game_view = LevelCompletedView(self)
+                self.window.show_view(game_view)
 
         # Moving enemies
         if not self.level_fail:
@@ -314,10 +393,10 @@ class GameView(arcade.View):
                 # Check if we are entered into scared enemy mode
                 if self.scared_mode:
                     en.scared_mode = True
-                    enemy_movement_speed = ENEMY_MOVEMENT_SPEED - 1
+                    enemy_movement_speed = ENEMY_MOVEMENT_SPEED - 1 + self.level
                 else:
                     en.scared_mode = False
-                    enemy_movement_speed = ENEMY_MOVEMENT_SPEED
+                    enemy_movement_speed = ENEMY_MOVEMENT_SPEED + self.level
 
                 # Get the center of the tile
                 en.center_area_x = int(en.center_x / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2
