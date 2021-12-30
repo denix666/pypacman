@@ -20,43 +20,43 @@ class Enemy(arcade.Sprite):
 
         # Regular textures ####################################################################################
         self.walk_right_textures = []
-        for i in range(2):
+        for i in range(3):
             texture = arcade.load_texture(resource_path("images/enemy/%s_right_%s.png" % (self.enemy_type, i)))
             self.walk_right_textures.append(texture)
 
         self.walk_left_textures = []
-        for i in range(2):
+        for i in range(3):
             texture = arcade.load_texture(resource_path("images/enemy/%s_left_%s.png" % (self.enemy_type, i)))
             self.walk_left_textures.append(texture)
 
         self.walk_up_textures = []
-        for i in range(2):
+        for i in range(3):
             texture = arcade.load_texture(resource_path("images/enemy/%s_up_%s.png" % (self.enemy_type, i)))
             self.walk_up_textures.append(texture)
 
         self.walk_down_textures = []
-        for i in range(2):
+        for i in range(3):
             texture = arcade.load_texture(resource_path("images/enemy/%s_down_%s.png" % (self.enemy_type, i)))
             self.walk_down_textures.append(texture)
 
         # Scared textures ####################################################################################
         self.scared_walk_right_textures = []
-        for i in range(2):
+        for i in range(3):
             texture = arcade.load_texture(resource_path("images/enemy/scared_right_%s.png" % i))
             self.scared_walk_right_textures.append(texture)
 
         self.scared_walk_left_textures = []
-        for i in range(2):
+        for i in range(3):
             texture = arcade.load_texture(resource_path("images/enemy/scared_left_%s.png" % i))
             self.scared_walk_left_textures.append(texture)
 
         self.scared_walk_up_textures = []
-        for i in range(2):
+        for i in range(3):
             texture = arcade.load_texture(resource_path("images/enemy/scared_up_%s.png" % i))
             self.scared_walk_up_textures.append(texture)
 
         self.scared_walk_down_textures = []
-        for i in range(2):
+        for i in range(3):
             texture = arcade.load_texture(resource_path("images/enemy/scared_down_%s.png" % i))
             self.scared_walk_down_textures.append(texture)
 

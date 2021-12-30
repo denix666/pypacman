@@ -33,7 +33,7 @@ class Player(arcade.Sprite):
             texture = arcade.load_texture(resource_path("images/player/d_%s.png" % i))
             self.walk_down_textures.append(texture)
 
-        self.texture = self.walk_right_textures[0]
+        self.texture = self.walk_left_textures[2]
         self.hit_box = self.texture.hit_box_points
 
     def update(self):

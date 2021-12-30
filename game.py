@@ -9,8 +9,32 @@ class IntroView(arcade.View):
     def __init__(self):
         super().__init__()
 
+        # Load font for intro
+        arcade.load_font(resource_path("fonts/game_font.ttf"))
+
+        # Vars for animated items
+        self.enemy_sprite_red = None
+        self.enemy_sprite_green = None
+        self.enemy_sprite_blue = None
+
     def on_show(self):
         arcade.set_background_color(arcade.color.BLACK)
+
+        # Load animated items for intro
+        self.enemy_sprite_red = Enemy("red")
+        self.enemy_sprite_red.center_x = SCREEN_WIDTH / 2 - 100
+        self.enemy_sprite_red.center_y = SCREEN_HEIGHT / 2 - 50
+        self.enemy_sprite_red.direction = "right"
+
+        self.enemy_sprite_green = Enemy("green")
+        self.enemy_sprite_green.center_x = SCREEN_WIDTH / 2
+        self.enemy_sprite_green.center_y = SCREEN_HEIGHT / 2 - 50
+        self.enemy_sprite_green.direction = "right"
+
+        self.enemy_sprite_blue = Enemy("blue")
+        self.enemy_sprite_blue.center_x = SCREEN_WIDTH / 2 + 100
+        self.enemy_sprite_blue.center_y = SCREEN_HEIGHT / 2 - 50
+        self.enemy_sprite_blue.direction = "right"
 
     def on_draw(self):
         arcade.start_render()
@@ -19,13 +43,21 @@ class IntroView(arcade.View):
         arcade.draw_texture_rectangle(intro_texture.width // 2,
                                       intro_texture.height // 2, SCREEN_WIDTH, SCREEN_HEIGHT, intro_texture)
 
+        # Show animated items
+        self.enemy_sprite_red.draw()
+        self.enemy_sprite_red.update()
+
+        self.enemy_sprite_green.draw()
+        self.enemy_sprite_green.update()
+
+        self.enemy_sprite_blue.draw()
+        self.enemy_sprite_blue.update()
+
         # Show intro and instructions for game
-        arcade.draw_text("SPACE - Shoot", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 150,
-                         arcade.color.YELLOW, font_size=33, anchor_x="center")
         arcade.draw_text("Up, Down, Left, Right - walk", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 210,
-                         arcade.color.YELLOW, font_size=33, anchor_x="center")
+                         arcade.color.YELLOW, font_size=28, anchor_x="center", font_name="KenVector Future")
         arcade.draw_text("Hit  SPACE or ESCAPE to  start  game", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 300,
-                         arcade.color.YELLOW, font_size=40, anchor_x="center")
+                         arcade.color.YELLOW, font_size=33, anchor_x="center", font_name="KenVector Future")
 
     def on_key_press(self, key, modifiers):
         if key == arcade.key.SPACE or key == arcade.key.ESCAPE:
@@ -129,6 +161,17 @@ class GameView(arcade.View):
         super().__init__()
         arcade.set_background_color(arcade.csscolor.BLACK)
 
+        # Load font
+        arcade.load_font(resource_path("fonts/game_font.ttf"))
+
+        # Sounds
+        self.die_sound = arcade.load_sound(resource_path("sounds/die.wav"))
+        self.eat_ghost_sound = arcade.load_sound(resource_path("sounds/eat_ghost.wav"))
+        self.eat_bonus_sound = arcade.load_sound(resource_path("sounds/eat_bonus.wav"))
+        self.walk_sound = arcade.load_sound(resource_path("sounds/walk.ogg"))
+        self.beginning_sound = arcade.load_sound(resource_path("sounds/beginning.wav"))
+        self.new_live_sound = arcade.load_sound(resource_path("sounds/new_live.mp3"))
+
         # Game variables
         self.end_game = False
         self.level_fail = None
@@ -142,6 +185,11 @@ class GameView(arcade.View):
         self.scared_mode = False
         self.player_explosion = None
         self.player_explosion_list = None
+        self.scared_mode_time = 0
+        self.first_time_loaded = True
+        self.game_beginning_time = 0
+        self.beginning_sound_started = False
+        self.score_for_next_life = 0
 
         self.map = None
 
@@ -217,6 +265,7 @@ class GameView(arcade.View):
 
         if self.level_fail:
             self.level_fail = False
+            self.scared_mode = False
         else:
             self.init_level()  # Init new level
 
@@ -269,8 +318,10 @@ class GameView(arcade.View):
         self.player_explosion_list.draw()
 
         # Show score and current level number
-        arcade.draw_text(f"Score: {self.score}", 10, SCREEN_HEIGHT - 35, arcade.color.YELLOW, 15)
-        arcade.draw_text(f"Level: {self.level}", 260, SCREEN_HEIGHT - 35, arcade.color.WHITE, 15)
+        arcade.draw_text(f"Score: {self.score}", 10, SCREEN_HEIGHT - 35,
+                         arcade.color.YELLOW, 15, font_name="KenVector Future")
+        arcade.draw_text(f"Level: {self.level}", 260, SCREEN_HEIGHT - 35,
+                         arcade.color.WHITE, 15, font_name="KenVector Future")
 
         # Show lives
         live_texture = arcade.load_texture(resource_path("images/player/r_1.png"))
@@ -320,9 +371,10 @@ class GameView(arcade.View):
     def on_update(self, delta_time):
         self.physics_engine.update()
 
-        self.scene.update(
-            ["Player"]
-        )
+        if not self.first_time_loaded:
+            self.scene.update(
+                ["Player"]
+            )
 
         self.player_explosion_list.update()
 
@@ -331,6 +383,7 @@ class GameView(arcade.View):
         if len(player_hit_list) > 0:
             if not self.scared_mode:
                 self.level_fail = True
+                arcade.play_sound(self.die_sound)
 
                 # Remove player and enemy from the field
                 for en in player_hit_list:
@@ -345,6 +398,8 @@ class GameView(arcade.View):
                 for en in player_hit_list:
                     en.remove_from_sprite_lists()
                     self.score += SCORE_FOR_GHOST
+                    self.score_for_next_life += SCORE_FOR_GHOST
+                    arcade.play_sound(self.eat_ghost_sound)
 
         # Wait until die animation is completed, and then restart level, if we have more lives
         if self.player_explosion.animation_completed:
@@ -365,15 +420,38 @@ class GameView(arcade.View):
         for hit in coin_hit_list:
             self.map["small_coin", int(hit.center_x / TILE_SIZE), int(hit.center_y / TILE_SIZE)] = False
             hit.remove_from_sprite_lists()
+            if not self.first_time_loaded:
+                arcade.play_sound(self.walk_sound)
             self.score += SCORE_FOR_SMALL_COIN
+            self.score_for_next_life += SCORE_FOR_SMALL_COIN
 
         # Check if we eat big coin increase score and remove coin from list and enable scared mode for enemy
         big_coin_hit_list = arcade.check_for_collision_with_list(self.player_sprite, self.big_coin_list)
         for hit in big_coin_hit_list:
             self.map["big_coin", int(hit.center_x / TILE_SIZE), int(hit.center_y / TILE_SIZE)] = False
             hit.remove_from_sprite_lists()
+            arcade.play_sound(self.eat_bonus_sound)
             self.score += SCORE_FOR_BIG_COIN
+            self.score_for_next_life += SCORE_FOR_BIG_COIN
+            self.scared_mode_time = 0
+            for en in self.scene["Enemies"]:
+                en.cur_texture = 0
+                en.number_of_textures_in_animation = 2
             self.scared_mode = True
+
+        # Scared mode time control
+        if self.scared_mode:
+            self.scared_mode_time += delta_time
+            if int(self.scared_mode_time) % 60 == SCARED_MODE_TIME:
+                for en in self.scene["Enemies"]:
+                    en.cur_texture = 0
+                    en.number_of_textures_in_animation = 3
+            if int(self.scared_mode_time) % 60 == SCARED_MODE_TIME + 2:
+                for en in self.scene["Enemies"]:
+                    en.cur_texture = 0
+                    en.number_of_textures_in_animation = 2
+                self.scared_mode = False
+                self.scared_mode_time = 0
 
         # Jump to next level, if we eat all cons or end game
         if len(self.small_coin_list) == 0 and len(self.big_coin_list) == 0:
@@ -388,7 +466,7 @@ class GameView(arcade.View):
                 self.window.show_view(game_view)
 
         # Moving enemies
-        if not self.level_fail:
+        if not self.level_fail and not self.first_time_loaded:
             for en in self.scene["Enemies"]:
                 # Check if we are entered into scared enemy mode
                 if self.scared_mode:
@@ -479,3 +557,18 @@ class GameView(arcade.View):
                             en.turn_x = int(en.center_x / TILE_SIZE)
                             en.turn_y = int(en.center_y / TILE_SIZE)
                             en.possible_moves_list = []
+
+        # Play beginning sound
+        if self.first_time_loaded:
+            if not self.beginning_sound_started:
+                self.beginning_sound_started = True
+                arcade.play_sound(self.beginning_sound)
+            self.game_beginning_time += delta_time
+            if int(self.game_beginning_time) % 60 == 4:
+                self.first_time_loaded = False
+
+        # Manage additional lives
+        if self.score_for_next_life > ADD_LIFE_ON_EVERY:
+            self.lives += 1
+            arcade.play_sound(self.new_live_sound)
+            self.score_for_next_life = 0

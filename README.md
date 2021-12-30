@@ -19,7 +19,7 @@ The screenshot of the game:
 ## TODO list:
 - [x] Enemy moving
 - [ ] Scared mode
-- [ ] Sound effects
+- [x] Sound effects
 - [ ] Gameplay
 - [ ] Maps
 - [ ] Bonuses
