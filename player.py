@@ -33,7 +33,7 @@ class Player(arcade.Sprite):
             texture = arcade.load_texture(resource_path("images/player/d_%s.png" % i))
             self.walk_down_textures.append(texture)
 
-        self.texture = self.walk_left_textures[2]
+        self.texture = self.walk_left_textures[0]
         self.hit_box = self.texture.hit_box_points
 
     def update(self):
@@ -88,7 +88,7 @@ class PlayerExplosion(arcade.Sprite):
 
         # Load textures for enemy
         self.player_animation_textures = []
-        for i in range(15):
+        for i in range(12):
             texture = arcade.load_texture(resource_path("images/animations/player_die/%s.png" % i))
             self.player_animation_textures.append(texture)
         self.textures = self.player_animation_textures

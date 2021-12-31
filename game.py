@@ -3,6 +3,7 @@ import random
 from helpersAndConstants import *
 from player import Player, PlayerExplosion
 from enemy import Enemy
+from eyes import Eyes
 
 
 class IntroView(arcade.View):
@@ -199,6 +200,10 @@ class GameView(arcade.View):
         # Enemy
         self.enemy_sprite = None
 
+        # Eyes
+        self.eyes_sprite = None
+        self.eyes_sprite_list = None
+
         # Some "sprite helper" to check if player can move up/down/left/right
         self.check_sprite = None
         self.check_sprite_list = None
@@ -274,6 +279,8 @@ class GameView(arcade.View):
             self.level_completed = False
             self.scared_mode = False
 
+        self.eyes_sprite_list = arcade.SpriteList()
+
         # Place coins
         for ix in range(int(SCREEN_WIDTH / TILE_SIZE)):
             for iy in range(int((SCREEN_HEIGHT - 50) / TILE_SIZE)):
@@ -299,7 +306,8 @@ class GameView(arcade.View):
                 if not self.map["wall", e[1], e[2]]:
                     self.enemy_sprite.center_x = e[1] * TILE_SIZE + TILE_SIZE / 2
                     self.enemy_sprite.center_y = e[2] * TILE_SIZE + TILE_SIZE / 2
-                    if self.enemy_sprite.center_y != 75:  # Avoid to place enemy on the first row together with player
+                    if self.enemy_sprite.center_y != 75 and \
+                       self.enemy_sprite.center_y != 125:  # Avoid to place enemy on the first rows together with player
                         if self.enemy_sprite.direction in possible_moves(self.map,
                                                                          self.enemy_sprite.center_x,
                                                                          self.enemy_sprite.center_y,
@@ -316,6 +324,7 @@ class GameView(arcade.View):
         self.big_coin_list.draw()
         self.scene.draw()
         self.player_explosion_list.draw()
+        self.eyes_sprite_list.draw()
 
         # Show score and current level number
         arcade.draw_text(f"Score: {self.score}", 10, SCREEN_HEIGHT - 35,
@@ -324,7 +333,7 @@ class GameView(arcade.View):
                          arcade.color.WHITE, 15, font_name="KenVector Future")
 
         # Show lives
-        live_texture = arcade.load_texture(resource_path("images/player/r_1.png"))
+        live_texture = arcade.load_texture(resource_path("images/player/r_0.png"))
         if self.lives >= 10:
             lives_to_draw = 10
         else:
@@ -396,6 +405,13 @@ class GameView(arcade.View):
                 self.player_explosion_list.append(self.player_explosion)
             else:
                 for en in player_hit_list:
+                    # Create eyes instead of enemy
+                    self.eyes_sprite = Eyes()
+                    self.eyes_sprite.direction = en.direction
+                    self.eyes_sprite.center_x = en.center_x
+                    self.eyes_sprite.center_y = en.center_y
+                    self.eyes_sprite_list.append(self.eyes_sprite)
+                    # Remove eaten enemy
                     en.remove_from_sprite_lists()
                     self.score += SCORE_FOR_GHOST
                     self.score_for_next_life += SCORE_FOR_GHOST
@@ -411,9 +427,13 @@ class GameView(arcade.View):
             else:
                 self.setup()
 
+        # Update enemies
         self.scene.update(
             ["Enemies"]
         )
+
+        # Update eyes
+        self.eyes_sprite_list.update()
 
         # Check if we eat coin increase score and remove coin from list
         coin_hit_list = arcade.check_for_collision_with_list(self.player_sprite, self.small_coin_list)
@@ -557,6 +577,66 @@ class GameView(arcade.View):
                             en.turn_x = int(en.center_x / TILE_SIZE)
                             en.turn_y = int(en.center_y / TILE_SIZE)
                             en.possible_moves_list = []
+
+        # Moving eyes
+        for eye in self.eyes_sprite_list:
+            # Check the time on air
+            eye.time_on_air += delta_time
+            if int(eye.time_on_air) % 60 > EYES_TTL:
+                self.enemy_sprite = Enemy(random.choice(["red", "pinc", "blue", "green"]))
+                self.enemy_sprite.direction = eye.direction
+                self.enemy_sprite.center_x = eye.center_x
+                self.enemy_sprite.center_y = eye.center_y
+                self.scene.add_sprite("Enemies", self.enemy_sprite)
+                eye.remove_from_sprite_lists()
+
+            # Get the center of the tile
+            eye.center_area_x = int(eye.center_x / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2
+            eye.center_area_y = int(eye.center_y / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2
+
+            # If we are not in the tile where decision was already taken - choose again random turn direction
+            if int(eye.center_x / TILE_SIZE) != eye.turn_x or int(eye.center_y / TILE_SIZE) != eye.turn_y:
+                eye.possible_moves_list = possible_moves(self.map, eye.center_x, eye.center_y, eye.direction)
+
+            if eye.direction == "right":
+                eye.center_x += EYES_MOVEMENT_SPEED
+                if len(eye.possible_moves_list) > 0:
+                    if eye.center_x >= eye.center_area_x:
+                        eye.center_x = eye.center_area_x
+                        eye.direction = random.choice(eye.possible_moves_list)
+                        eye.turn_x = int(eye.center_x / TILE_SIZE)
+                        eye.turn_y = int(eye.center_y / TILE_SIZE)
+                        eye.possible_moves_list = []
+
+            if eye.direction == "left":
+                eye.center_x -= EYES_MOVEMENT_SPEED
+                if len(eye.possible_moves_list) > 0:
+                    if eye.center_x <= eye.center_area_x:
+                        eye.center_x = eye.center_area_x
+                        eye.direction = random.choice(eye.possible_moves_list)
+                        eye.turn_x = int(eye.center_x / TILE_SIZE)
+                        eye.turn_y = int(eye.center_y / TILE_SIZE)
+                        eye.possible_moves_list = []
+
+            if eye.direction == "up":
+                eye.center_y += EYES_MOVEMENT_SPEED
+                if len(eye.possible_moves_list) > 0:
+                    if eye.center_y >= eye.center_area_y:
+                        eye.center_y = eye.center_area_y
+                        eye.direction = random.choice(eye.possible_moves_list)
+                        eye.turn_x = int(eye.center_x / TILE_SIZE)
+                        eye.turn_y = int(eye.center_y / TILE_SIZE)
+                        eye.possible_moves_list = []
+
+            if eye.direction == "down":
+                eye.center_y -= EYES_MOVEMENT_SPEED
+                if len(eye.possible_moves_list) > 0:
+                    if eye.center_y <= eye.center_area_y:
+                        eye.center_y = eye.center_area_y
+                        eye.direction = random.choice(eye.possible_moves_list)
+                        eye.turn_x = int(eye.center_x / TILE_SIZE)
+                        eye.turn_y = int(eye.center_y / TILE_SIZE)
+                        eye.possible_moves_list = []
 
         # Play beginning sound
         if self.first_time_loaded:
