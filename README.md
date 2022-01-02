@@ -9,7 +9,7 @@ The screenshot of the game:
 
 ## How to run:
 1. Install required modules
-
+ 
     > *pip install arcade*
 
 2. Run the game:
@@ -18,9 +18,11 @@ The screenshot of the game:
 
 ## TODO list:
 - [x] Enemy moving
-- [ ] Scared mode
+- [x] Scared mode
 - [x] Sound effects
-- [ ] Gameplay
+- [x] Gameplay
 - [ ] Maps
 - [ ] Bonuses
-- [ ] Additional animations
+- [x] Additional animations
+- [ ] View screens graphics
+- [x] Intro screen

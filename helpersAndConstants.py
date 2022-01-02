@@ -4,7 +4,7 @@ import arcade
 # Main settings
 SCREEN_WIDTH = 1150
 SCREEN_HEIGHT = 750
-SCREEN_TITLE = "PyPacman v0.6 dev"
+SCREEN_TITLE = "PyPacman v0.7 dev"
 TILE_SCALING = 1
 TILE_SIZE = 50
 
@@ -13,8 +13,8 @@ STARTING_LEVEL = 1  # 1
 STARTING_SCORE = 0  # 0
 STARTING_AMOUNT_OF_LIVES = 3  # 2
 LAST_GAME_LEVEL = 3
-SCARED_MODE_TIME = 4
-ADD_LIFE_ON_EVERY = 5000
+SCARED_MODE_TIME = 4  # Seconds
+ADD_LIFE_ON_EVERY = 5000  # Score points
 
 # Player settings (default values in comments)
 PLAYER_SCALING = 1  # 1
@@ -31,8 +31,8 @@ ENEMY_SCALING = 1  # 1
 STARTING_AMOUNT_OF_ENEMY = 2  # 2 ( + level number)
 
 # Eyes
-EYES_MOVEMENT_SPEED = 6
-EYES_TTL = 5
+EYES_MOVEMENT_SPEED = 6  # 6
+EYES_TTL = 5  # 5 Seconds
 
 # Score
 SCORE_FOR_GHOST = 150

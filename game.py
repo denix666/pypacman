@@ -587,6 +587,7 @@ class GameView(arcade.View):
                 self.enemy_sprite.direction = eye.direction
                 self.enemy_sprite.center_x = eye.center_x
                 self.enemy_sprite.center_y = eye.center_y
+                self.enemy_sprite.scared_mode = False
                 self.scene.add_sprite("Enemies", self.enemy_sprite)
                 eye.remove_from_sprite_lists()
 
