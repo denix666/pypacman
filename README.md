@@ -7,14 +7,14 @@ The screenshot of the game:
 ## Requirements:
 > Python >= v3.8
 
-## How to run:
-1. Install required modules
- 
-    > *pip install arcade*
+## How to install and run:
+1. Install pyshamus package - enter to cloned directory and execute:
 
-2. Run the game:
+    > *pip install --user .*
 
-    > *python main.py*
+2. Run the game - execute command:
+
+    > *pypacman*
 
 ## TODO list:
 - [x] Enemy moving
