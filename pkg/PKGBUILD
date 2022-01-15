@@ -1,13 +1,13 @@
 pkgname=pypacman
 pkgver=0.7
-pkgrel=1
+pkgrel=2
 pkgdesc="Pacman game written in python"
 arch=("any")
 url="https://github.com/denix666/pypacman"
 license=("GPLv3")
 makedepends=('python-setuptools')
 
-source=("http://games.os.vc/pygames/pypacman/pypacman-${pkgver}.tar.gz"
+source=("http://games.os.vc/pygames/pypacman/pypacman-${pkgver}-${pkgrel}.tar.gz"
         "pypacman.png"
         "pypacman.desktop"
 )
