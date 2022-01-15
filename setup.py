@@ -10,7 +10,7 @@ setup(name='pypacman',
       license='GPLv3',
       packages=find_packages(),
       package_data={
-        '': ['*.ttf', '*.png', '*.mp3', '*.wav', '*.json'],
+        '': ['*.ttf', '*.png', '*.ogg', '*.mp3', '*.wav', '*.json'],
       },
       requires=[
         'python (>=3.8.0)',

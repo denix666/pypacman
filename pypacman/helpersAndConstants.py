@@ -41,7 +41,7 @@ SCORE_FOR_BIG_COIN = 50
 
 
 def resource_path(relative_path):
-    base_path = os.path.abspath(".")
+    base_path = os.path.dirname(__file__)
     return os.path.join(base_path, relative_path)
 
 
