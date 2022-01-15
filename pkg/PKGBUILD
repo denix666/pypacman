@@ -1,0 +1,24 @@
+pkgname=pypacman
+pkgver=0.7
+pkgrel=1
+pkgdesc="Pacman game written in python"
+arch=("any")
+url="https://github.com/denix666/pypacman"
+license=("GPLv3")
+makedepends=('python-setuptools')
+
+source=("http://games.os.vc/pygames/pypacman/pypacman-${pkgver}.tar.gz"
+        "pypacman.png"
+        "pypacman.desktop"
+)
+
+package () {
+    depends+=('python')
+    
+    cd "${srcdir}/${pkgname}"
+    python setup.py install --root="${pkgdir}"
+    
+    cd "${srcdir}"
+    install -D -m644 pypacman.png ${pkgdir}/usr/share/pixmaps/pypacman.png
+    install -D -m644 pypacman.desktop ${pkgdir}/usr/share/applications/pypacman.desktop
+}
